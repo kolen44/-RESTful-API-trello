@@ -1,7 +1,11 @@
 import { CardEntity } from 'src/cards/entities/card.entity';
-import { ManyToOne } from 'typeorm';
+import { Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
 
+@Entity()
 export class CommentEntity {
+  @PrimaryGeneratedColumn({ type: 'integer' })
+  id: number;
+
   @ManyToOne(() => CardEntity, (card) => card.comments, {
     onDelete: 'CASCADE',
   })

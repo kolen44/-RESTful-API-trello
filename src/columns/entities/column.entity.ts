@@ -2,12 +2,14 @@ import { CardEntity } from 'src/cards/entities/card.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
 import {
   Column,
+  Entity,
   JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 
+@Entity()
 export class ColumnEntity {
   @PrimaryGeneratedColumn({ type: 'integer' })
   id: number;

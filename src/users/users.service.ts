@@ -1,26 +1,97 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import * as argon2 from 'argon2';
+import { User } from 'src/types/user.type';
+import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UserEntity } from './entities/user.entity';
 
 @Injectable()
 export class UsersService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  constructor(
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
+    private jwtService: JwtService,
+  ) {}
+
+  async findOne(email: string) {
+    if (!email) return new UnauthorizedException('Данный токен невалидный');
+    const user = await this.userRepository.findOne({
+      where: { email },
+    });
+    if (!user)
+      throw new UnauthorizedException('Пользователь не найден с таким емайлом');
+    return user;
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async validateUser(email: string, password: string) {
+    const user: any = await this.findOne(email);
+    if (!user)
+      return new UnauthorizedException('Данного пользователя не существует');
+    const userPassword = user.password;
+    const passwordIsMatch = await argon2.verify(userPassword, password);
+    if (user && passwordIsMatch) {
+      return user;
+    }
+    return new UnauthorizedException('Имя телефона или пароль неверны');
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findById(id: number) {
+    return await this.userRepository.findOne({ where: { id } });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async create(createUserDto: CreateUserDto) {
+    const existUser = await this.userRepository.findOne({
+      where: {
+        email: createUserDto.email,
+      },
+    });
+    if (existUser)
+      throw new BadRequestException(
+        'Данный пользователь с таким номером телефона уже существует!',
+      );
+
+    const token = this.jwtService.sign({
+      email: createUserDto.email,
+    });
+    const user = await this.userRepository.save({
+      email: createUserDto.email,
+      password: await argon2.hash(createUserDto.password),
+    });
+
+    return { ...user, token };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async login(user: User) {
+    return {
+      user,
+      token: this.jwtService.sign({
+        email: user.email,
+      }),
+    };
+  }
+
+  async delete(id: number) {
+    const user: any = await this.findById(id);
+    if (!user)
+      return new UnauthorizedException(
+        'Проверьте данные пользователя, так как сервер не может их найти',
+      );
+    return this.userRepository.delete(user.id);
+  }
+
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    const user: any = await this.findById(id);
+    if (!user)
+      return new UnauthorizedException(
+        'Проверьте данные пользователя, так как сервер не может их найти',
+      );
+    return this.userRepository.update(user.id, updateUserDto);
   }
 }
