@@ -1,3 +1,6 @@
+<h1>Установка => Переход в папку проекта => docker-compose up </h1>
+<h2>Ниже о проекте (на английском языке)</h2>
+
 <h1>CRUDAPI clone trello functions</h1>
 
 
