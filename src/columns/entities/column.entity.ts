@@ -2,11 +2,12 @@ import { CardEntity } from 'src/cards/entities/card.entity';
 import { UserEntity } from 'src/users/entities/user.entity';
 import {
   Column,
+  CreateDateColumn,
   Entity,
-  JoinColumn,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 @Entity()
@@ -14,27 +15,20 @@ export class ColumnEntity {
   @PrimaryGeneratedColumn({ type: 'integer' })
   id: number;
 
-  @Column({ nullable: true })
-  description: string;
-
-  @Column({ nullable: true })
-  avatar_url: string;
+  @Column()
+  text: string;
 
   @ManyToOne(() => UserEntity, (user) => user.columns, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'email' })
   user: UserEntity;
 
-  @OneToMany(() => CardEntity, (columns) => columns.column)
+  @OneToMany(() => CardEntity, (card) => card.column)
   cards: CardEntity[];
 
-  @Column({ nullable: true })
-  title: string;
+  @CreateDateColumn()
+  createdAt: Date;
 
-  @Column({ nullable: true })
-  url_video?: string;
-
-  @Column({ nullable: true })
-  rating?: number;
+  @UpdateDateColumn()
+  updatedAt: Date;
 }

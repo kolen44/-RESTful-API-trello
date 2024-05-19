@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -43,7 +44,14 @@ export class UsersService {
   }
 
   async findById(id: number) {
-    return await this.userRepository.findOne({ where: { id } });
+    const user = await this.userRepository.findOne({
+      where: { id },
+    });
+    if (!user)
+      throw new NotFoundException('Пользователя с таким айди не найдено');
+    const { password, ...other } = user;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    return other;
   }
 
   async create(createUserDto: CreateUserDto) {
@@ -68,9 +76,12 @@ export class UsersService {
     return { ...user, token };
   }
 
+  //Логин пароль не отдает в целях безопасности
   async login(user: User) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...other } = user;
     return {
-      user,
+      other,
       token: this.jwtService.sign({
         email: user.email,
       }),
